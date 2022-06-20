@@ -1,0 +1,56 @@
+body {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: 0;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background-color: #323232;
+
+  width: 100vw;
+  height: 100vh;
+}
+
+#container {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+
+  flex-direction: column;
+
+  height: 90vmin;
+  width: 90vmin;
+}
+
+#timetable-name {
+  height: 5%;
+  width: 90%;
+
+  border-radius: 0.5vmin;
+  font-size: 2vmin;
+}
+
+#timetable-text {
+  height: 60%;
+  width: 90%;
+
+  border-radius: 0.5vmin;
+  font-size: 2vmin;
+}
+
+#submit-button {
+  height: 5%;
+  width: 90%;
+
+  border-radius: 0.5vmin;
+
+  border: none;
+  font-size: 2vmin;
+}
+
+#submit-button:active {
+  border: none;
+}
