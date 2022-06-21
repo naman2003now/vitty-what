@@ -185,9 +185,24 @@ let slot_timings = {
 };
 
 function onSubmit() {
-  let slot = document.getElementById("timetable-text").value;
-  console.log(slot);
-  console.log(slot_timings[slot]);
+  let timetable_text = document.getElementById("timetable-text").value;
+  let lectures = [
+    ...timetable_text.matchAll(
+      /(?<=THEORY.*)\s([A-Z]|[A-Z][A-Z]|[A-Z][A-Z][A-Z])([0-9]|[0-9][0-9])-([^-]+)-([^-]+)-([^-]+)-([^\s]+)/g
+    ),
+  ];
+  lectures.forEach((lecture) => {
+    let slot = lecture[1] + lecture[2];
+    let room = lecture[5];
+    let course_code = lecture[3];
+    console.log(
+      slot,
+      room,
+      course_code,
+      `${slot_timings[slot][0]} from ${slot_timings[slot][1]} to ${slot_timings[slot][2]}`
+    );
+    slot_timings[slot] = slot_timings[slot].slice(3);
+  });
 }
 
 document.getElementById("submit-button").onclick = onSubmit;
