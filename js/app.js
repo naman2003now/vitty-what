@@ -42,6 +42,17 @@
 
 // document.body.innerHTML = JSON.stringify(slots);
 // }
+const CLIENT_ID =
+  "438957213547-tud19n08bcde2egqp5kmqhja993rbns0.apps.googleusercontent.com";
+const API_KEY = "AIzaSyD-zKIh5e5gFVk5xlG5p4CcK8KS4rDTgtc";
+const DISCOVERY_DOC =
+  "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest";
+const SCOPES = "https://www.googleapis.com/auth/calendar.events";
+document.getElementById("submit-button").style.visibility = "hidden";
+
+let tokenClient;
+let gapiInited = false;
+let gisInited = false;
 
 let slot_timings = {
   A1: ["MON", "08:00", "08:50", "WED", "09:00", "09:50"],
@@ -184,25 +195,141 @@ let slot_timings = {
   L94: ["SUN", "18:31", "19:20"],
 };
 
-function onSubmit() {
-  let timetable_text = document.getElementById("timetable-text").value;
-  let lectures = [
-    ...timetable_text.matchAll(
-      /(?<=THEORY.*)\s([A-Z]|[A-Z][A-Z]|[A-Z][A-Z][A-Z])([0-9]|[0-9][0-9])-([^-]+)-([^-]+)-([^-]+)-([^\s]+)/g
-    ),
-  ];
-  lectures.forEach((lecture) => {
-    let slot = lecture[1] + lecture[2];
-    let room = lecture[5];
-    let course_code = lecture[3];
-    console.log(
-      slot,
-      room,
-      course_code,
-      `${slot_timings[slot][0]} from ${slot_timings[slot][1]} to ${slot_timings[slot][2]}`
-    );
-    slot_timings[slot] = slot_timings[slot].slice(3);
+random_dates_for_days = {
+  MON: "June 20, 2022",
+  TUE: "June 21, 2022",
+  WED: "June 22, 2022",
+  THU: "June 23, 2022",
+  FRI: "June 24, 2022",
+  SAT: "June 25, 2022",
+  SUN: "June 26, 2022",
+};
+function gapiLoaded() {
+  gapi.load("client", intializeGapiClient);
+}
+
+async function intializeGapiClient() {
+  await gapi.client.init({
+    apiKey: API_KEY,
+    discoveryDocs: [DISCOVERY_DOC],
   });
+  gapiInited = true;
+  maybeEnableButtons();
+}
+
+function gisLoaded() {
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPES,
+    callback: "", // defined later
+  });
+  gisInited = true;
+  maybeEnableButtons();
+}
+
+function maybeEnableButtons() {
+  if (gapiInited && gisInited) {
+    document.getElementById("submit-button").style.visibility = "visible";
+  }
+}
+
+async function SignIn() {
+  tokenClient.callback = async (resp) => {
+    if (resp.error !== undefined) {
+      throw resp;
+    }
+  };
+
+  if (gapi.client.getToken() === null) {
+    tokenClient.requestAccessToken({ prompt: "consent" });
+  } else {
+    tokenClient.requestAccessToken({ prompt: "" });
+  }
+}
+
+async function onSubmit() {
+  tokenClient.callback = async (resp) => {
+    if (resp.error !== undefined) {
+      throw resp;
+    }
+    let calendarId = document.getElementById("timetable-id").value;
+    let timetable_text = document.getElementById("timetable-text").value;
+    let lectures = [
+      ...timetable_text.matchAll(
+        /(?<=THEORY.*)\s([A-Z]|[A-Z][A-Z]|[A-Z][A-Z][A-Z])([0-9]|[0-9][0-9])-([^-]+)-([^-]+)-([^-]+)-([^\s]+)/g
+      ),
+    ];
+    let events = [];
+    lectures.forEach((lecture) => {
+      let slot = lecture[1] + lecture[2];
+      let room = lecture[5];
+      let course_code = lecture[3];
+      // console.log(
+      // slot,
+      // room,
+      // course_code,
+      // `${slot_timings[slot][0]} from ${slot_timings[slot][1]} to ${slot_timings[slot][2]}`
+      // );
+      start_date = new Date(
+        random_dates_for_days[slot_timings[slot][0]] +
+          " " +
+          slot_timings[slot][1] +
+          ":00 gmt+0530"
+      );
+      end_date = new Date(
+        random_dates_for_days[slot_timings[slot][0]] +
+          " " +
+          slot_timings[slot][1] +
+          ":00 gmt+0530"
+      );
+      // console.log(
+      // random_dates_for_days[slot_timings[slot][0]] +
+      // " " +
+      // slot_timings[slot][2] +
+      // ":00 gmt+0530",
+      // start_date
+      // );
+      console.log(start_date);
+      var event = {
+        summary: room + " " + course_code + " " + slot,
+        location: room,
+        start: {
+          dateTime: start_date.toISOString(),
+          timeZone: "Asia/Kolkata",
+        },
+        end: {
+          dateTime: end_date.toISOString(),
+          timeZone: "Asia/Kolkata",
+        },
+        recurrence: ["RRULE:FREQ=WEEKLY"],
+        reminders: {
+          useDefault: false,
+          overrides: [{ method: "popup", minutes: 10 }],
+        },
+      };
+
+      events.push(event);
+      slot_timings[slot] = slot_timings[slot].slice(3);
+    });
+    const batch = gapi.client.newBatch();
+    events.map((r, j) => {
+      batch.add(
+        gapi.client.calendar.events.insert({
+          calendarId,
+          resource: events[j],
+        })
+      );
+    });
+    batch.then(function () {
+      console.log("all jobs now dynamically done!!!");
+    });
+  };
+
+  if (gapi.client.getToken() === null) {
+    tokenClient.requestAccessToken({ prompt: "consent" });
+  } else {
+    tokenClient.requestAccessToken({ prompt: "" });
+  }
 }
 
 document.getElementById("submit-button").onclick = onSubmit;
