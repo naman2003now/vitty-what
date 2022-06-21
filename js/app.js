@@ -292,7 +292,6 @@ async function onSubmit() {
       console.log(start_date);
       var event = {
         summary: room + " " + course_code + " " + slot,
-        location: room,
         start: {
           dateTime: start_date.toISOString(),
           timeZone: "Asia/Kolkata",
@@ -304,7 +303,10 @@ async function onSubmit() {
         recurrence: ["RRULE:FREQ=WEEKLY"],
         reminders: {
           useDefault: false,
-          overrides: [{ method: "popup", minutes: 10 }],
+          overrides: [
+            { method: "popup", minutes: 5 },
+            { method: "popup", minutes: 15 },
+          ],
         },
       };
 
