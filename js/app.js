@@ -279,7 +279,7 @@ async function onSubmit() {
       end_date = new Date(
         random_dates_for_days[slot_timings[slot][0]] +
           " " +
-          slot_timings[slot][1] +
+          slot_timings[slot][2] +
           ":00 gmt+0530"
       );
       // console.log(
